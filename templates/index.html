@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Data Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-processing and Cleanup Tool</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
-    <div class="container">
-        <div class="chat-container">
-            <div class="chat-header">
-                <h1>CSV Data Assistant</h1>
-                <div class="file-upload">
-                    <input type="file" id="csvFile" accept=".csv">
-                    <button onclick="uploadFile()">Upload CSV</button>
-                </div>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="message system">
-                    Hello! I'm your CSV data assistant. Please upload a CSV file and I'll help you analyze it.
-                </div>
-            </div>
-            <div class="chat-input">
-                <input type="text" id="userInput" placeholder="Type your message...">
-                <button onclick="sendMessage()">Send</button>
-            </div>
+  <div class="container">
+    <div class="chat-container">
+      <div class="chat-header">
+        <h1>Pre-processing and Cleanup Tool</h1>
+        <div class="file-upload">
+          <input type="file" id="csvFile" accept=".csv">
+          <button onclick="uploadFile()">Upload CSV</button>
         </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message system">
+          Hello! I'm your data assistant. Please upload a CSV file and I'll help you analyze it.
+        </div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+      </div>
     </div>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
-</html> 
+
+</html>

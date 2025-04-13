@@ -62,7 +62,7 @@ def chat():
         if preprocessing_response:
             # Call Eliza API with the preprocessing response
             eliza_response = requests.post(
-                'http://localhost:3000/f5b3e476-fd10-01ad-ac62-8adbfefaf224/message',
+                'http://localhost:3000/b850bc30-45f8-0041-a00a-83df46d8555d/message',
                 json={
                     'text': preprocessing_response + " " + message,
                     'userId': 'user123',
