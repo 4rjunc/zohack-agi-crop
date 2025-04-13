@@ -1,35 +1,730 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medical Data Pre-processing Tool</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      /* Custom scrollbar styles that can't be inlined */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f9ff;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0070a8;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #005c8a;
+      }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pre-processing and Cleanup Tool</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+      /* Chat messages specific scrollbar */
+      .chat-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+      .chat-messages::-webkit-scrollbar-track {
+        background: rgba(242, 249, 255, 0.5);
+      }
+      .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(0, 112, 168, 0.3);
+        border-radius: 10px;
+      }
+      .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 112, 168, 0.5);
+      }
 
-<body>
-  <div class="container">
-    <div class="chat-container">
-      <div class="chat-header">
-        <h1>Pre-processing and Cleanup Tool</h1>
-        <div class="file-upload">
-          <input type="file" id="csvFile" accept=".csv">
-          <button onclick="uploadFile()">Upload CSV</button>
+      /* Keyframes for animations */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes ecgLine {
+        0% {
+          background-position: 0% 0%;
+        }
+        100% {
+          background-position: 100% 0%;
+        }
+      }
+
+      /* Button click animations */
+      @keyframes buttonClick {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.95);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes glowEffect {
+        0% {
+          box-shadow: 0 0 5px rgba(0, 112, 168, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 15px rgba(0, 112, 168, 0.5);
+        }
+        100% {
+          box-shadow: 0 0 5px rgba(0, 112, 168, 0.3);
+        }
+      }
+
+      /* Tab hover animations */
+      @keyframes tabHover {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(-3px);
+        }
+      }
+
+      /* Media queries */
+      @media (max-width: 768px) {
+        .chat-header h1 {
+          font-size: 22px;
+        }
+        .medical-stats {
+          flex-direction: column;
+          gap: 5px;
+        }
+        .file-upload {
+          flex-direction: column;
+        }
+        .chat-messages {
+          height: 400px !important;
+        }
+        .medical-info {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+      /* Active button state */
+      .btn-active {
+        animation: buttonClick 0.3s ease;
+      }
+
+      /* Classes for JS animation */
+      .tab-hover {
+        animation: tabHover 0.3s ease forwards;
+      }
+
+      .glow-effect {
+        animation: glowEffect 1.5s infinite;
+      }
+    </style>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', Arial, sans-serif;
+      background-color: #f0f7fa;
+      background-image: url('https://cdn.pixabay.com/photo/2017/08/05/00/12/people-2581913_1280.jpg');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      background-blend-mode: overlay;
+    "
+  >
+    <div style="max-width: 1200px; margin: 20px auto; padding: 0 20px">
+      <div
+        style="
+          background-color: rgba(255, 255, 255, 0.92);
+          border-radius: 15px;
+          box-shadow: 0 4px 20px rgba(0, 112, 168, 0.25);
+          overflow: hidden;
+          border: 1px solid #e0f0f7;
+          position: relative;
+        "
+      >
+        <!-- Stethoscope background icon -->
+        <div
+          style="
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-image: url('https://cdn.pixabay.com/photo/2017/05/15/23/47/stethoscope-icon-2316460_1280.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.2;
+            z-index: 1;
+          "
+        ></div>
+
+        <div
+          style="
+            padding: 20px;
+            background: linear-gradient(135deg, #0070a8 0%, #1e88e5 100%);
+            border-bottom: 2px solid #0070a8;
+            position: relative;
+          "
+        >
+          <!-- ECG Line background -->
+          <div
+            style="
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-image: url('https://cdn.pixabay.com/photo/2016/11/10/05/11/ecg-1813559_1280.png');
+              background-size: 200px;
+              background-repeat: repeat-x;
+              background-position: bottom;
+              opacity: 0.08;
+              mix-blend-mode: overlay;
+            "
+          ></div>
+
+          <!-- Animated ECG line at bottom -->
+          <div
+            style="
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              width: 100%;
+              height: 2px;
+              background: linear-gradient(
+                to right,
+                rgba(0, 112, 168, 0.1) 0%,
+                rgba(0, 112, 168, 0.5) 15%,
+                rgba(255, 82, 82, 0.8) 20%,
+                rgba(0, 112, 168, 0.1) 30%,
+                rgba(0, 112, 168, 0.5) 40%,
+                rgba(255, 82, 82, 0.8) 45%,
+                rgba(0, 112, 168, 0.1) 55%,
+                rgba(0, 112, 168, 0.1) 70%,
+                rgba(0, 112, 168, 0.5) 80%,
+                rgba(255, 82, 82, 0.8) 85%,
+                rgba(0, 112, 168, 0.1) 95%
+              );
+              background-size: 200% 100%;
+              animation: ecgLine 15s linear infinite;
+            "
+          ></div>
+
+          <h1
+            style="
+              margin: 0;
+              font-size: 28px;
+              color: white;
+              text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+              position: relative;
+            "
+          >
+            <i
+              class="fas fa-heartbeat"
+              style="color: #ff5252; animation: pulse 1.5s infinite"
+            ></i>
+            Medical Data Processing Assistant
+          </h1>
+
+          <!-- Medical stats tabs - now clickable and animated -->
+          <div
+            class="tab-container"
+            style="
+              display: flex;
+              justify-content: space-around;
+              margin-top: 10px;
+              background-color: rgba(255, 255, 255, 0.15);
+              border-radius: 5px;
+              padding: 8px;
+            "
+          >
+            <span
+              onclick="activateTab(this)"
+              class="tab-item"
+              style="
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                padding: 5px 12px;
+                border-radius: 20px;
+                transition: all 0.3s ease;
+              "
+              ><i class="fas fa-procedures" style="color: #a3e0ff"></i> Patient
+              Data Analysis</span
+            >
+            <span
+              onclick="activateTab(this)"
+              class="tab-item"
+              style="
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                padding: 5px 12px;
+                border-radius: 20px;
+                transition: all 0.3s ease;
+              "
+              ><i class="fas fa-clipboard-check" style="color: #a3e0ff"></i>
+              Medical Research Ready</span
+            >
+          </div>
+
+          <div
+            style="
+              margin-top: 15px;
+              background-color: rgba(255, 255, 255, 0.15);
+              padding: 12px;
+              border-radius: 8px;
+              border: 1px dashed rgba(255, 255, 255, 0.5);
+              display: flex;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 10px;
+            "
+          >
+            <label
+              for="csvFile"
+              class="upload-label"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                background-color: rgba(255, 255, 255, 0.7);
+                border-radius: 4px;
+                font-size: 14px;
+                color: #0070a8;
+                cursor: pointer;
+                border: 1px solid rgba(0, 112, 168, 0.3);
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.9)'; this.style.boxShadow='0 0 8px rgba(0, 112, 168, 0.3)'"
+              onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.7)'; this.style.boxShadow='none'"
+              onmousedown="this.style.transform='scale(0.95)'"
+              onmouseup="this.style.transform='scale(1)'"
+            >
+              <i class="fas fa-file-medical-alt" style="font-size: 16px"></i>
+              Select Patient Data CSV
+              <!-- Ripple effect overlay -->
+              <span class="ripple-effect"></span>
+            </label>
+            <input
+              type="file"
+              id="csvFile"
+              accept=".csv"
+              style="opacity: 0; position: absolute; z-index: -1"
+              onchange="showFileName()"
+            />
+            <button
+              onclick="uploadFile()"
+              class="animated-btn"
+              style="
+                padding: 10px 20px;
+                background: linear-gradient(135deg, #0070a8 0%, #1e88e5 100%);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 500;
+                box-shadow: 0 2px 5px rgba(0, 112, 168, 0.3);
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 15px rgba(0, 112, 168, 0.4)'"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(0, 112, 168, 0.3)'"
+              onmousedown="addClickEffect(this)"
+            >
+              <i class="fas fa-upload"></i> Process Data
+              <span
+                id="upload-status"
+                style="
+                  position: absolute;
+                  bottom: -20px;
+                  left: 0;
+                  width: 100%;
+                  font-size: 12px;
+                  opacity: 0;
+                  transition: all 0.3s ease;
+                "
+              ></span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="message system">
-          Hello! I'm your data assistant. Please upload a CSV file and I'll help you analyze it.
+
+        <div
+          id="chatMessages"
+          style="
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background-image: url('https://cdn.pixabay.com/photo/2018/05/08/08/50/artificial-intelligence-3382521_1280.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: overlay;
+            background-color: rgba(255, 255, 255, 0.85);
+          "
+        >
+          <div
+            class="message system"
+            style="
+              margin-bottom: 15px;
+              padding: 12px 18px;
+              border-radius: 12px;
+              max-width: 70%;
+              box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+              position: relative;
+              backdrop-filter: blur(5px);
+              background-color: #f1f9ff;
+              color: #2c3e50;
+              border-left: 4px solid #0070a8;
+              border-bottom-left-radius: 0;
+              transition: all 0.3s ease;
+            "
+            onmouseover="this.style.boxShadow='0 5px 15px rgba(0, 112, 168, 0.15)'; this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.boxShadow='0 2px 5px rgba(0, 0, 0, 0.05)'; this.style.transform='translateY(0)'"
+          >
+            <i
+              class="fas fa-user-md"
+              style="color: #0070a8; margin-right: 8px"
+            ></i>
+            Hello! I'm your medical data assistant. Please upload a CSV file of
+            patient data and I'll help you analyze and clean it for your
+            clinical research.
+          </div>
         </div>
-      </div>
-      <div class="chat-input">
-        <input type="text" id="userInput" placeholder="Type your message...">
-        <button onclick="sendMessage()">Send</button>
+
+        <div
+          style="
+            padding: 20px;
+            border-top: 1px solid #e0f0f7;
+            display: flex;
+            gap: 10px;
+            background-color: #f8fcff;
+          "
+        >
+          <input
+            type="text"
+            id="userInput"
+            placeholder="Ask a question about the data processing..."
+            style="
+              flex: 1;
+              padding: 12px 15px;
+              border: 1px solid #cce5ff;
+              border-radius: 25px;
+              font-size: 16px;
+              box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+              transition: all 0.3s ease;
+            "
+            onfocus="this.style.borderColor='#0070a8'; this.style.boxShadow='0 0 0 3px rgba(0, 112, 168, 0.1)'"
+            onblur="this.style.borderColor='#cce5ff'; this.style.boxShadow='inset 0 1px 3px rgba(0, 0, 0, 0.05)'"
+          />
+          <button
+            onclick="sendMessage()"
+            class="animated-btn"
+            style="
+              padding: 10px 20px;
+              background: linear-gradient(135deg, #0070a8 0%, #1e88e5 100%);
+              color: white;
+              border: none;
+              border-radius: 25px;
+              cursor: pointer;
+              font-size: 16px;
+              font-weight: 500;
+              box-shadow: 0 2px 5px rgba(0, 112, 168, 0.3);
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 15px rgba(0, 112, 168, 0.4)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 5px rgba(0, 112, 168, 0.3)'"
+            onmousedown="addClickEffect(this)"
+          >
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+        </div>
+
+        <div
+          style="
+            background: linear-gradient(to right, #e6f7ff, #f0f7fa);
+            padding: 15px;
+            border-top: 1px solid #e0f0f7;
+            text-align: center;
+          "
+        >
+          <!-- Tab navigation -->
+          <div
+            style="
+              display: flex;
+              justify-content: space-around;
+              flex-wrap: wrap;
+              gap: 15px;
+              margin-bottom: 10px;
+            "
+          >
+            <div
+              onclick="switchTab(this, 'lab')"
+              class="info-tab active-tab"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #0070a8;
+                font-size: 14px;
+                background: rgba(0, 112, 168, 0.05);
+                padding: 5px 12px;
+                border-radius: 20px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="this.style.background='rgba(0, 112, 168, 0.1)'; this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.background='rgba(0, 112, 168, 0.05)'; this.style.transform='translateY(0)'"
+              onmousedown="this.style.transform='scale(0.95)'"
+              onmouseup="this.style.transform='scale(1)'"
+            >
+              <i
+                class="fas fa-vial"
+                style="color: #0070a8; font-size: 16px"
+              ></i>
+              Lab Data Analysis
+            </div>
+            <div
+              onclick="switchTab(this, 'imaging')"
+              class="info-tab"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #0070a8;
+                font-size: 14px;
+                background: rgba(0, 112, 168, 0.05);
+                padding: 5px 12px;
+                border-radius: 20px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="this.style.background='rgba(0, 112, 168, 0.1)'; this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.background='rgba(0, 112, 168, 0.05)'; this.style.transform='translateY(0)'"
+              onmousedown="this.style.transform='scale(0.95)'"
+              onmouseup="this.style.transform='scale(1)'"
+            >
+              <i
+                class="fas fa-x-ray"
+                style="color: #0070a8; font-size: 16px"
+              ></i>
+              Imaging Integration
+            </div>
+            <div
+              onclick="switchTab(this, 'records')"
+              class="info-tab"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #0070a8;
+                font-size: 14px;
+                background: rgba(0, 112, 168, 0.05);
+                padding: 5px 12px;
+                border-radius: 20px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="this.style.background='rgba(0, 112, 168, 0.1)'; this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.background='rgba(0, 112, 168, 0.05)'; this.style.transform='translateY(0)'"
+              onmousedown="this.style.transform='scale(0.95)'"
+              onmouseup="this.style.transform='scale(1)'"
+            >
+              <i
+                class="fas fa-notes-medical"
+                style="color: #0070a8; font-size: 16px"
+              ></i>
+              Patient Records
+            </div>
+          </div>
+          <div style="font-size: 12px; color: #777; margin-top: 10px">
+            <span
+              >Powered by
+              <i class="fas fa-laptop-medical" style="color: #0070a8"></i>
+              Eliza AI</span
+            >
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+      // Add interactive animations and functionality
+      function addClickEffect(element) {
+        element.classList.add("btn-active");
+        setTimeout(() => {
+          element.classList.remove("btn-active");
+        }, 300);
+      }
 
+      function activateTab(tab) {
+        // Remove active class from all tabs
+        const allTabs = document.querySelectorAll(".tab-item");
+        allTabs.forEach((item) => {
+          item.style.background = "transparent";
+        });
+
+        // Add active class to clicked tab
+        tab.style.background = "rgba(255, 255, 255, 0.25)";
+        tab.classList.add("tab-hover");
+
+        // Show animation
+        setTimeout(() => {
+          tab.classList.remove("tab-hover");
+        }, 300);
+      }
+
+      function switchTab(tab, tabName) {
+        // Remove active class from all tabs
+        const allTabs = document.querySelectorAll(".info-tab");
+        allTabs.forEach((item) => {
+          item.style.background = "rgba(0, 112, 168, 0.05)";
+          item.style.fontWeight = "normal";
+        });
+
+        // Add active class to clicked tab
+        tab.style.background = "rgba(0, 112, 168, 0.2)";
+        tab.style.fontWeight = "bold";
+        tab.classList.add("glow-effect");
+
+        // Simulate loading content
+        const chatMessages = document.getElementById("chatMessages");
+        const newMessage = document.createElement("div");
+        newMessage.className = "message system";
+        newMessage.style.marginBottom = "15px";
+        newMessage.style.padding = "12px 18px";
+        newMessage.style.borderRadius = "12px";
+        newMessage.style.maxWidth = "70%";
+        newMessage.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.05)";
+        newMessage.style.position = "relative";
+        newMessage.style.backdropFilter = "blur(5px)";
+        newMessage.style.backgroundColor = "#f1f9ff";
+        newMessage.style.color = "#2c3e50";
+        newMessage.style.borderLeft = "4px solid #0070a8";
+        newMessage.style.borderBottomLeftRadius = "0";
+        newMessage.style.transition = "all 0.3s ease";
+
+        let content = "";
+        if (tabName === "lab") {
+          content =
+            '<i class="fas fa-vial" style="color: #0070a8; margin-right: 8px"></i> Lab data module activated. You can now process and analyze patient laboratory results.';
+        } else if (tabName === "imaging") {
+          content =
+            '<i class="fas fa-x-ray" style="color: #0070a8; margin-right: 8px"></i> Imaging module activated. You can now integrate X-ray, MRI and CT scan data for analysis.';
+        } else if (tabName === "records") {
+          content =
+            '<i class="fas fa-notes-medical" style="color: #0070a8; margin-right: 8px"></i> Patient records module activated. You can now access and process patient history data.';
+        }
+
+        newMessage.innerHTML = content;
+        chatMessages.appendChild(newMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        // Add event listeners for hover effects
+        newMessage.addEventListener("mouseover", function () {
+          this.style.boxShadow = "0 5px 15px rgba(0, 112, 168, 0.15)";
+          this.style.transform = "translateY(-2px)";
+        });
+
+        newMessage.addEventListener("mouseout", function () {
+          this.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.05)";
+          this.style.transform = "translateY(0)";
+        });
+      }
+
+      function showFileName() {
+        const fileInput = document.getElementById("csvFile");
+        const uploadBtn = document.querySelector(".animated-btn");
+        const uploadStatus = document.getElementById("upload-status");
+
+        if (fileInput.files.length > 0) {
+          uploadStatus.textContent = `Selected: ${fileInput.files[0].name}`;
+          uploadStatus.style.opacity = "1";
+          uploadStatus.style.bottom = "-18px";
+
+          // Add glow effect to upload button
+          uploadBtn.style.boxShadow = "0 0 15px rgba(0, 112, 168, 0.5)";
+          uploadBtn.style.animation = "glowEffect 1.5s infinite";
+        }
+      }
+
+      // Add ripple effect to buttons
+      document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(
+          "button, .upload-label, .info-tab, .tab-item"
+        );
+
+        buttons.forEach((button) => {
+          button.addEventListener("click", function (e) {
+            const ripple = document.createElement("span");
+            ripple.classList.add("ripple");
+            ripple.style.position = "absolute";
+            ripple.style.borderRadius = "50%";
+            ripple.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+            ripple.style.width = "10px";
+            ripple.style.height = "10px";
+            ripple.style.transform = "scale(0)";
+            ripple.style.transition = "all 0.6s ease";
+            ripple.style.top = e.offsetY - 5 + "px";
+            ripple.style.left = e.offsetX - 5 + "px";
+
+            this.appendChild(ripple);
+
+            setTimeout(() => {
+              ripple.style.transform = "scale(15)";
+              ripple.style.opacity = "0";
+
+              setTimeout(() => {
+                ripple.remove();
+              }, 600);
+            }, 10);
+          });
+        });
+      });
+    </script>
+  </body>
 </html>
