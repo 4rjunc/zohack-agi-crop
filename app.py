@@ -57,12 +57,12 @@ def chat():
     message = request.json.get('message', '')
     
     # First, check if it's a preprocessing command
-    if preprocessor.df is not None:
-        preprocessing_response = preprocessor.process_command(message)
-        if preprocessing_response:
+    preprocessing_response = preprocessor.process_command(message)
+    print(f"{preprocessing_response=}")
+    if preprocessing_response:
             # Call Eliza API with the preprocessing response
             eliza_response = requests.post(
-                'http://localhost:3000/b850bc30-45f8-0041-a00a-83df46d8555d/message',
+                'http://localhost:3000/e0e10e6f-ff2b-0d4c-8011-1fc1eee7cb32/message',
                 json={
                     'text': preprocessing_response + " " + message,
                     'userId': 'user123',
@@ -72,17 +72,18 @@ def chat():
             
             if eliza_response.status_code == 200:
                 response_data = eliza_response.json()
+                print(f"{response_data=}")
                 return jsonify({'response': response_data[0]['text']})
     
     # If no preprocessing command matched or no CSV is loaded, just use Eliza
-    eliza_response = requests.post(
-        'http://localhost:3000/f5b3e476-fd10-01ad-ac62-8adbfefaf224/message',
-        json={
-            'text': message,
-            'userId': 'user123',
-            'userName': 'User'
-        }
-    )
+    # eliza_response = requests.post(
+    #     'http://localhost:3000/e0e10e6f-ff2b-0d4c-8011-1fc1eee7cb32/message',
+    #     json={
+    #         'text': message,
+    #         'userId': 'user123',
+    #         'userName': 'User'
+    #     }
+    # )
     
     if eliza_response.status_code == 200:
         response_data = eliza_response.json()
